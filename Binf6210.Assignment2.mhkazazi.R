@@ -207,22 +207,37 @@ ureA.StringSet
 BrowseSeqs(ureA.StringSet)
 
 # Converting them to a data frame:
-dfvacA <- data.frame(vacA_Title = names(vacA.StringSet), vacA_Sequence = paste(vacA.StringSet))
+
+#In order to write a function for dataframe filtering steps, I had to change dataframe column names to uniform generic names
+
+#dfvacA <- data.frame(vacA_Title = names(vacA.StringSet), vacA_Sequence = paste(vacA.StringSet))
+
+dfvacA <- data.frame(Title = names(vacA.StringSet), Sequence = paste(vacA.StringSet))
+
 class(dfvacA)
 View(dfvacA)
 
-dfureA <- data.frame(ureA_Title = names(ureA.StringSet), ureA_Sequence = paste(ureA.StringSet))
+#dfureA <- data.frame(ureA_Title = names(ureA.StringSet), ureA_Sequence = paste(ureA.StringSet))
+
+dfureA <- data.frame(Title = names(ureA.StringSet), Sequence = paste(ureA.StringSet))
+
 class(dfureA)
 View(dfureA)
 
 # Let's organize our data frame as the names do not look very good.
+
+#I had to also format these codes with the new column names
+
     # Making a new column:
-    dfvacA$Bacterium_Name <- word(dfvacA$vacA_Title, 2L, 3L)
-    dfureA$Bacterium_Name <- word(dfureA$ureA_Title, 2L, 3L)
+
+    dfvacA$Bacterium_Name <- word(dfvacA$Title, 2L, 3L)
+    dfureA$Bacterium_Name <- word(dfureA$Title, 2L, 3L)
+
     # Reorganize the data frame:
-    dfvacA <- dfvacA[, c("vacA_Title", "Bacterium_Name", "vacA_Sequence")]
-    dfureA <- dfureA[, c("ureA_Title", "Bacterium_Name", "ureA_Sequence")]
-   
+    
+    dfvacA <- dfvacA[, c("Title", "Bacterium_Name", "Sequence")]
+    dfureA <- dfureA[, c("Title", "Bacterium_Name", "Sequence")]
+    
     class(dfvacA)
     class(dfureA)
     dim(dfvacA)
@@ -230,38 +245,50 @@ View(dfureA)
     
     View(dfvacA)
     View(dfureA)
-# Checking a summary of the sequence length of the both genes:    
-summary(str_count(dfvacA$vacA_Sequence))
-summary(str_count(dfureA$ureA_Sequence))
+# Checking a summary of the sequence length of the both genes:
+
+#formated this summary codes with the new column names        
+    
+summary(str_count(dfvacA$Sequence))
+summary(str_count(dfureA$Sequence))
+
 
 # So, the next step is filtering the data frame of each gene;so, we set the missing data to 1 percent and the length variability to 100.
-  #vacA
-  dfvacA2 <- dfvacA %>%
-    select(vacA_Title, Bacterium_Name, vacA_Sequence) %>%
-    filter(!is.na(vacA_Sequence)) %>%
-    mutate(vacA_Sequence2 = str_remove_all(vacA_Sequence, "^N+|N+$|-")) %>%
-    filter(str_count(vacA_Sequence2, "N") <= (0.01 * str_count(vacA_Sequence))) %>%
-    filter(str_count(vacA_Sequence2) >= median(str_count(vacA_Sequence2)) - 100 & str_count(vacA_Sequence2) <= median(str_count(vacA_Sequence2)) + 100)
+
+#writing a function for the filtering step
+
+filterdf <- function(df) {
+  
+  df2 <- df %>%
+    select(Title, Bacterium_Name, Sequence) %>%
+    filter(!is.na(Sequence)) %>%
+    mutate(Sequence2 = str_remove_all(Sequence, "^N+|N+$|-")) %>%
+    filter(str_count(Sequence2, "N") <= (0.01 * str_count(Sequence))) %>%
+    filter(str_count(Sequence2) >= median(str_count(Sequence2)) - 100 & str_count(Sequence2) <= median(str_count(Sequence2)) + 100)
+  
+  return (df2)
+}
+
+#trying out the filter function
+
+dfvacA2 <- filterdf(dfvacA)
+dfureA2 <- filterdf(dfureA) 
+
+
   
   view(dfvacA2)
   dim(dfvacA2)
-  sum(is.na(dfvacA2$vacA_Sequence2))
-  sum(str_count(dfvacA2$vacA_Sequence2, "-"))
-  summary(str_count(dfvacA2$vacA_Sequence2))
+  sum(is.na(dfvacA2$Sequence2))
+  sum(str_count(dfvacA2$Sequence2, "-"))
+  summary(str_count(dfvacA2$Sequence2))
 
-  #ureA:
-  dfureA2 <- dfureA %>%
-    select(ureA_Title, Bacterium_Name, ureA_Sequence) %>%
-    filter(!is.na(ureA_Sequence)) %>%
-    mutate(ureA_Sequence2 = str_remove_all(ureA_Sequence, "^N+|N+$|-")) %>%
-    filter(str_count(ureA_Sequence2, "N") <= (0.01 * str_count(ureA_Sequence))) %>%
-    filter(str_count(ureA_Sequence2) >= median(str_count(ureA_Sequence2)) - 100 & str_count(ureA_Sequence2) <= median(str_count(ureA_Sequence2)) + 100)
+  
   
   view(dfureA2)
   dim(dfureA2)
-  sum(is.na(dfureA2$ureA_Sequence2))
-  sum(str_count(dfureA2$ureA_Sequence2, "-"))
-  summary(str_count(dfureA2$ureA_Sequence2))
+  sum(is.na(dfureA2$Sequence2))
+  sum(str_count(dfureA2$Sequence2, "-"))
+  summary(str_count(dfureA2$Sequence2))
   
 ##### 4: MAIN CODING SCRIPT (PART 2) ----
 
@@ -269,20 +296,23 @@ summary(str_count(dfureA$ureA_Sequence))
 
 # After we filtered the data frames, the next step is ALIGNMENT.
   #vacA:
-  dfvacA2 <- as.data.frame(dfvacA2)
-  dfvacA2$vacA_Sequence2 <- DNAStringSet(dfvacA2$vacA_Sequence2)
-  names(dfvacA2$vacA_Sequence2) <- dfvacA2$vacA_Title
   
-  dfvacA.alignment <- DNAStringSet(muscle::muscle(dfvacA2$vacA_Sequence2))
+  #formatted the codes with the new coloumn names
+  
+  dfvacA2 <- as.data.frame(dfvacA2)
+  dfvacA2$Sequence2 <- DNAStringSet(dfvacA2$Sequence2)
+  names(dfvacA2$Sequence2) <- dfvacA2$Title
+  
+  dfvacA.alignment <- DNAStringSet(muscle::muscle(dfvacA2$Sequence2))
   
   BrowseSeqs(dfvacA.alignment)
   
   #ureA:
   dfureA2 <- as.data.frame(dfureA2)
-  dfureA2$ureA_Sequence2 <- DNAStringSet(dfureA2$ureA_Sequence2)
-  names(dfureA2$ureA_Sequence2) <- dfureA2$ureA_Title
+  dfureA2$Sequence2 <- DNAStringSet(dfureA2$Sequence2)
+  names(dfureA2$Sequence2) <- dfureA2$Title
   
-  dfureA.alignment <- DNAStringSet(muscle::muscle(dfureA2$ureA_Sequence2))
+  dfureA.alignment <- DNAStringSet(muscle::muscle(dfureA2$Sequence2))
   
   BrowseSeqs(dfureA.alignment)  
   
