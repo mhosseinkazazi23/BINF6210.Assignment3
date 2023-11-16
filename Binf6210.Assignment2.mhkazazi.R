@@ -46,6 +46,12 @@ library(kmer)
 install.packages("cluster")
 library(cluster) 
 
+#added a new library for the extra cluster plot and because I have not used this type of plot before
+install.packages("factoextra")
+library("factoextra")
+install.packages("FactoMineR")
+library("FactoMineR")
+
 ##### 3: MAIN CODING SCRIPT (PART 1) ----
 
 # Let's see a list of available Entrez databases by using the entrez_dbs() function:
@@ -299,21 +305,26 @@ dfureA2 <- filterdf(dfureA)
   
   #formatted the codes with the new coloumn names
   
-  dfvacA2 <- as.data.frame(dfvacA2)
-  dfvacA2$Sequence2 <- DNAStringSet(dfvacA2$Sequence2)
-  names(dfvacA2$Sequence2) <- dfvacA2$Title
+  #wrote a function for alignment
   
-  dfvacA.alignment <- DNAStringSet(muscle::muscle(dfvacA2$Sequence2))
+  df.alignment <- function(df) {
+    
+    df <- as.data.frame(df)
+    df$Sequence2 <- DNAStringSet(df$Sequence2)
+    names(df$Sequence2) <- df$Title
+    df.alignment <- DNAStringSet(muscle::muscle(df$Sequence2))
+    
+    return(df.alignment)
+  }
+  
+  
+  #Using the function
+  dfvacA.alignment <- df.alignment(dfvacA2)
+  dfureA.alignment <- df.alignment(dfureA2)
+  
+  
   
   BrowseSeqs(dfvacA.alignment)
-  
-  #ureA:
-  dfureA2 <- as.data.frame(dfureA2)
-  dfureA2$Sequence2 <- DNAStringSet(dfureA2$Sequence2)
-  names(dfureA2$Sequence2) <- dfureA2$Title
-  
-  dfureA.alignment <- DNAStringSet(muscle::muscle(dfureA2$Sequence2))
-  
   BrowseSeqs(dfureA.alignment)  
   
 # The dashes "-" indicate gaps in the alignment. Gaps are introduced to account for insertions or deletions in the sequences being aligned. Each dash represents a position where there is no corresponding nucleotide in the sequence.
@@ -380,7 +391,18 @@ dfureA2 <- filterdf(dfureA)
   ureA.cluster_colors <- c("red", "blue")
   plot(ureA.SilhouetteScore, main = "Silhouette Plot for ureA", col = ureA.cluster_colors)
   
-# Thus, we can see that based on the silhouette scores, vacA appears to have more well-defined clusters with higher silhouette scores. However, ureA has lower silhouette scores, suggesting that the clusters are less distinct and might have some degree of overlap.
+
+# Thus, we can see that based on the silhouette scores, vacA appears to have more well-defined clusters with higher silhouette scores. However, ureA has lower silhouette scores, suggesting that the clusters are less distinct and might have some degree of overlap. 
+  
+  
+#Added a plot to visualize the clusters
+#I added this plot because it allows for visualization of how the clusters are distant from each other
+  
+fviz_cluster(vacA.KmeansClustering, data = vacA.TN93.distanceMatrix, geom = "point", palette = c("#CC6666", "#9999CC", "#66CC99"), ellipse.type = "convex", ggtheme = theme_bw(), pointsize = 1.2 ,labelsize = 12, main = "VacA Kmeans cluster plot", xlab = NULL, ylab = NULL)
+  
+fviz_cluster(ureA.KmeansClustering, data = ureA.TN93.distanceMatrix, palette = c("#2E9FDF", "#E7B800"),geom = "point", ellipse.type = "convex", ggtheme = theme_bw(), pointsize = 1.2 ,labelsize = 12, main = "UreA Kmeans cluster plot", xlab = NULL, ylab = NULL)
+  
+
 
 ##### 5. CONCLUSION AND DISCUSSION ----
 
