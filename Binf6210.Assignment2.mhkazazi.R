@@ -297,23 +297,23 @@ dfureA2 <- filterdf(dfureA)
 # After we filtered the data frames, the next step is ALIGNMENT.
   #vacA:
   
-  #formatted the codes with the new coloumn names
+  #wrote the alignment codes as a function
   
-  dfvacA2 <- as.data.frame(dfvacA2)
-  dfvacA2$Sequence2 <- DNAStringSet(dfvacA2$Sequence2)
-  names(dfvacA2$Sequence2) <- dfvacA2$Title
+  df.alignment <- function(df) {
+    
+    df <- as.data.frame(df)
+    df$Sequence2 <- DNAStringSet(df$Sequence2)
+    names(df$Sequence2) <- df$Title
+    df.alignment <- DNAStringSet(muscle::muscle(df$Sequence2))
+    
+    return(df.alignment)
+  }
   
-  dfvacA.alignment <- DNAStringSet(muscle::muscle(dfvacA2$Sequence2))
+  #trying out the function
+  dfvacA.alignment <- df.alignment(dfvacA2)
+  dfureA.alignment <- df.alignment(dfureA2)
   
   BrowseSeqs(dfvacA.alignment)
-  
-  #ureA:
-  dfureA2 <- as.data.frame(dfureA2)
-  dfureA2$Sequence2 <- DNAStringSet(dfureA2$Sequence2)
-  names(dfureA2$Sequence2) <- dfureA2$Title
-  
-  dfureA.alignment <- DNAStringSet(muscle::muscle(dfureA2$Sequence2))
-  
   BrowseSeqs(dfureA.alignment)  
   
 # The dashes "-" indicate gaps in the alignment. Gaps are introduced to account for insertions or deletions in the sequences being aligned. Each dash represents a position where there is no corresponding nucleotide in the sequence.
